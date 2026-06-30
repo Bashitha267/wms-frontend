@@ -4,7 +4,7 @@ import { LogOut, Calendar, Menu } from "lucide-react";
 const Header = ({ onMenuClick }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Mock user and totalValue
+  // Static user and totalValue details (no context dependency)
   const user = {
     name: "User",
     role: "admin",
@@ -19,7 +19,7 @@ const Header = ({ onMenuClick }) => {
   }, []);
 
   const handleLogout = () => {
-    console.log("Logout clicked");
+    console.log("Logged out");
   };
 
   const formattedDate = currentDate.toLocaleDateString("en-US", {
