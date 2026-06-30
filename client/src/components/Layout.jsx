@@ -1,18 +1,14 @@
 import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
 import SideBar from "./sidebar";
 import Header from "./Header";
 
-const Layout = ({ children, activeTab, setActiveTab }) => {
+const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden text-gray-900">
-      <SideBar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
+      <SideBar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Layout Area */}
       <main
@@ -20,7 +16,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       >
         <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="px-4 lg:px-8 pb-8 pt-6">
-          {children}
+          <Outlet />
         </div>
       </main>
 

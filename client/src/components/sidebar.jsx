@@ -1,4 +1,5 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -12,28 +13,40 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const SideBar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
+const SideBar = ({ isOpen, onClose }) => {
   const navItems = [
     {
-      id: "Dashboard",
       name: "Dashboard",
+      path: "/dashboard",
       icon: <LayoutDashboard size={20} />,
     },
-    { id: "Suppliers", name: "Suppliers", icon: <Users size={20} /> },
-    { id: "Products", name: "Products", icon: <Package size={20} /> },
-    { id: "NewSupply", name: "New Supply", icon: <Truck size={20} /> },
-    { id: "Loading", name: "Loading", icon: <ShoppingCart size={20} /> },
-    { id: "Shops", name: "Shops", icon: <Store size={20} /> },
-    { id: "Resources", name: "Resources", icon: <FolderTree size={20} /> },
-    { id: "Invoices", name: "Invoices", icon: <FileText size={20} /> },
-    { id: "Returns", name: "Returns", icon: <RefreshCw size={20} /> },
-    { id: "Sales", name: "Sales", icon: <ShoppingCart size={20} /> },
-    { id: "Settings", name: "Settings", icon: <Settings size={20} /> },
+    { name: "Suppliers", path: "/suppliers", icon: <Users size={20} /> },
+    { name: "Products", path: "/products", icon: <Package size={20} /> },
+    { name: "New Supply", path: "/new-supply", icon: <Truck size={20} /> },
+    { name: "Loading", path: "/loading", icon: <ShoppingCart size={20} /> },
+    { name: "Shops", path: "/shops", icon: <Store size={20} /> },
+    { name: "Resources", path: "/resources", icon: <FolderTree size={20} /> },
+    {
+      name: "Invoices",
+      path: "/supply-invoices",
+      icon: <FileText size={20} />,
+    },
+    {
+      name: "Returns",
+      path: "/returns",
+      icon: <RefreshCw size={20} />,
+    },
+    {
+      name: "Sales",
+      path: "/sales",
+      icon: <ShoppingCart size={20} />,
+    },
+    { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
   ];
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 text-gray-900 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 text-gray-900 flex flex-col transform transition-transform duration-300 ease-in-out ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       } shadow-lg`}
     >
@@ -60,33 +73,35 @@ const SideBar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
         </button>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                // Close sidebar on mobile when a link is clicked
-                if (window.innerWidth < 1024 && onClose) {
-                  onClose();
-                }
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                onClose();
+              }
+            }}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-200 font-bold"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <span
-                className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-white" : "text-gray-400"}`}
-              >
-                {item.icon}
-              </span>
-              <span className="text-sm tracking-tight">{item.name}</span>
-            </button>
-          );
-        })}
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-white" : "text-gray-400"}`}
+                >
+                  {item.icon}
+                </span>
+                <span className="text-sm tracking-tight">{item.name}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
       </nav>
     </aside>
   );
