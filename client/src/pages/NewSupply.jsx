@@ -1,7 +1,12 @@
-import React from 'react';
 
-function NewSupply() {
-  return <div>this is new supply</div>;
+import React from 'react'
+
+const NewSupply = () => {
+  return (
+    <div>
+      hello thi is newsupply
+    </div>
+  )
 }
 
-export default NewSupply;
+export default NewSupply
