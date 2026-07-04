@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { LogOut, Calendar, Menu } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const Header = ({ onMenuClick }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { user, logout } = useAuth();
 
-  // Static user and totalValue details (no context dependency)
-  const user = {
-    name: "User",
-    role: "admin",
-  };
   const totalValue = 1250000;
 
   useEffect(() => {
@@ -18,8 +15,12 @@ const Header = ({ onMenuClick }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleLogout = () => {
-    console.log("Logged out");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Failed to logout:", err);
+    }
   };
 
   const formattedDate = currentDate.toLocaleDateString("en-US", {
