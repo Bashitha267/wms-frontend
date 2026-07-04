@@ -14,63 +14,85 @@ import Invoices from "./pages/Invoices";
 import Returns from "./pages/Returns";
 import Sales from "./pages/Sales";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <Login />,
+  },
+  {
     path: "/",
-    element: <Layout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        path: "dashboard",
-        element: <Dashboard />,
-      },
-      {
-        path: "suppliers",
-        element: <Suppliers />,
-      },
-      {
-        path: "products",
-        element: <Products />,
-      },
-      {
-        path: "new-supply",
-        element: <NewSupply />,
-      },
-      {
-        path: "loading",
-        element: <Loading />,
-      },
-      {
-        path: "resources",
-        element: <Resources />,
-      },
-      {
-        path: "shops",
-        element: <Shops />,
-      },
-      {
-        path: "settings",
-        element: <Settings />,
-      },
-      {
-        path: "supply-invoices",
-        element: <Invoices />,
-      },
-      {
-        path: "returns",
-        element: <Returns />,
-      },
-      {
-        path: "sales",
-        element: <Sales />,
-      },
-      {
-        path: "",
-        element: <Navigate to="/dashboard" replace />,
+        element: <Layout />,
+        children: [
+          {
+            path: "dashboard",
+            element: <Dashboard />,
+          },
+          {
+            path: "suppliers",
+            element: <Suppliers />,
+          },
+          {
+            path: "products",
+            element: <Products />,
+          },
+          {
+            path: "new-supply",
+            element: <NewSupply />,
+          },
+          {
+            path: "loading",
+            element: <Loading />,
+          },
+          {
+            path: "resources",
+            element: <Resources />,
+          },
+          {
+            path: "shops",
+            element: <Shops />,
+          },
+          {
+            path: "settings",
+            // Restrict settings to admin only
+            element: <ProtectedRoute allowedRoles={["admin"]} />,
+            children: [
+              {
+                path: "",
+                element: <Settings />,
+              }
+            ]
+          },
+          {
+            path: "supply-invoices",
+            element: <Invoices />,
+          },
+          {
+            path: "returns",
+            element: <Returns />,
+          },
+          {
+            path: "sales",
+            element: <Sales />,
+          },
+          {
+            path: "",
+            element: <Navigate to="/dashboard" replace />,
+          },
+        ],
       },
     ],
+  },
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
   },
 ]);
 

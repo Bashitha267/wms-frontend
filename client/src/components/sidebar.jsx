@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   Users,
@@ -14,35 +15,81 @@ import {
 } from "lucide-react";
 
 const SideBar = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
+
   const navItems = [
     {
       name: "Dashboard",
       path: "/dashboard",
       icon: <LayoutDashboard size={20} />,
+      roles: ["admin", "staff", "rep", "user"],
     },
-    { name: "Suppliers", path: "/suppliers", icon: <Users size={20} /> },
-    { name: "Products", path: "/products", icon: <Package size={20} /> },
-    { name: "New Supply", path: "/new-supply", icon: <Truck size={20} /> },
-    { name: "Loading", path: "/loading", icon: <ShoppingCart size={20} /> },
-    { name: "Shops", path: "/shops", icon: <Store size={20} /> },
-    { name: "Resources", path: "/resources", icon: <FolderTree size={20} /> },
+    { 
+      name: "Suppliers", 
+      path: "/suppliers", 
+      icon: <Users size={20} />, 
+      roles: ["admin", "staff"] 
+    },
+    { 
+      name: "Products", 
+      path: "/products", 
+      icon: <Package size={20} />, 
+      roles: ["admin", "staff"] 
+    },
+    { 
+      name: "New Supply", 
+      path: "/new-supply", 
+      icon: <Truck size={20} />, 
+      roles: ["admin", "staff"] 
+    },
+    { 
+      name: "Loading", 
+      path: "/loading", 
+      icon: <ShoppingCart size={20} />, 
+      roles: ["admin", "staff", "rep"] 
+    },
+    { 
+      name: "Shops", 
+      path: "/shops", 
+      icon: <Store size={20} />, 
+      roles: ["admin", "rep"] 
+    },
+    { 
+      name: "Resources", 
+      path: "/resources", 
+      icon: <FolderTree size={20} />, 
+      roles: ["admin", "staff"] 
+    },
     {
       name: "Invoices",
       path: "/supply-invoices",
       icon: <FileText size={20} />,
+      roles: ["admin", "staff"],
     },
     {
       name: "Returns",
       path: "/returns",
       icon: <RefreshCw size={20} />,
+      roles: ["admin", "staff", "rep"],
     },
     {
       name: "Sales",
       path: "/sales",
       icon: <ShoppingCart size={20} />,
+      roles: ["admin", "rep"],
     },
-    { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
+    { 
+      name: "Settings", 
+      path: "/settings", 
+      icon: <Settings size={20} />, 
+      roles: ["admin"] 
+    },
   ];
+
+  // Filter menu items by the current user's role
+  const filteredNavItems = navItems.filter(
+    (item) => !item.roles || item.roles.includes(user?.role)
+  );
 
   return (
     <aside
@@ -73,7 +120,7 @@ const SideBar = ({ isOpen, onClose }) => {
         </button>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
