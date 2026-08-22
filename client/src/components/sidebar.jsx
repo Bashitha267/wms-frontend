@@ -22,7 +22,7 @@ const SideBar = ({ isOpen, onClose }) => {
       name: "Dashboard",
       path: "/dashboard",
       icon: <LayoutDashboard size={20} />,
-      roles: ["admin", "staff", "rep", "user"],
+      roles: ["admin", "staff"],
     },
     { 
       name: "Suppliers", 
@@ -46,13 +46,13 @@ const SideBar = ({ isOpen, onClose }) => {
       name: "Loading", 
       path: "/loading", 
       icon: <ShoppingCart size={20} />, 
-      roles: ["admin", "staff", "rep"] 
+      roles: ["admin", "staff"] 
     },
     { 
       name: "Shops", 
       path: "/shops", 
       icon: <Store size={20} />, 
-      roles: ["admin", "rep"] 
+      roles: ["admin", "staff"] 
     },
     { 
       name: "Resources", 
@@ -70,13 +70,13 @@ const SideBar = ({ isOpen, onClose }) => {
       name: "Returns",
       path: "/returns",
       icon: <RefreshCw size={20} />,
-      roles: ["admin", "staff", "rep"],
+      roles: ["admin", "staff"],
     },
     {
       name: "Sales",
       path: "/sales",
       icon: <ShoppingCart size={20} />,
-      roles: ["admin", "rep"],
+      roles: ["admin", "staff"],
     },
     { 
       name: "Settings", 
