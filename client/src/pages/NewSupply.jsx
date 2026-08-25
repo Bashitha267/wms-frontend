@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useWarehouse } from "../context/WarehouseContext";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Package, Pencil, Trash2, X } from "lucide-react";
+import { Package, Pencil, Trash2, X, CheckCircle2, AlertTriangle, ArrowRight, RotateCcw } from "lucide-react";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
@@ -52,6 +52,8 @@ const NewSupply = () => {
   const [loading, setLoading] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [savedInvoiceSummary, setSavedInvoiceSummary] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   const searchInputRef = useRef(null);
@@ -63,7 +65,8 @@ const NewSupply = () => {
       !activeProduct &&
       !showAddProductModal &&
       !showConfirmSave &&
-      !showConfirmCancel
+      !showConfirmCancel &&
+      !showSuccessModal
     ) {
       const timer = setTimeout(() => searchInputRef.current?.focus(), 100);
       return () => clearTimeout(timer);
@@ -74,6 +77,7 @@ const NewSupply = () => {
     showAddProductModal,
     showConfirmSave,
     showConfirmCancel,
+    showSuccessModal,
   ]);
 
   // Fetch Data
@@ -303,6 +307,15 @@ const NewSupply = () => {
     setBatchItems(batchItems.filter((i) => i.temp_id !== id));
   };
 
+  const getItemsTotal = () => {
+    return batchItems.reduce(
+      (sum, item) => sum + (item.qty - (item.free_qty || 0)) * item.netprice,
+      0,
+    );
+  };
+
+  const isTotalMatched = Math.abs(getItemsTotal() - originalInvoiceTotal) < 0.01;
+
   const handleCompleteSupply = async () => {
     setLoading(true);
     try {
@@ -340,9 +353,17 @@ const NewSupply = () => {
         await refreshTotalValue();
       }
 
-      alert("Supply record successfully saved!");
-      resetForm();
-      navigate("/supply-invoices", { state: { activeTab: "supply" } });
+      setSavedInvoiceSummary({
+        invoice_number: invoiceData.invoice_no,
+        supplier_name: invoiceData.supplier_name,
+        target_total: originalInvoiceTotal,
+        items_total: getItemsTotal(),
+        items_count: batchItems.length,
+        is_matched: isTotalMatched,
+      });
+
+      setShowConfirmSave(false);
+      setShowSuccessModal(true);
     } catch (err) {
       console.error("Supply save error:", err);
       alert(err.response?.data?.message || "Failed to save supply record.");
@@ -364,14 +385,10 @@ const NewSupply = () => {
     setEditingItemId(null);
     setActiveProduct(null);
     setShowConfirmCancel(false);
+    setShowConfirmSave(false);
+    setShowSuccessModal(false);
+    setSavedInvoiceSummary(null);
     setOriginalInvoiceTotal(0);
-  };
-
-  const getItemsTotal = () => {
-    return batchItems.reduce(
-      (sum, item) => sum + (item.qty - (item.free_qty || 0)) * item.netprice,
-      0,
-    );
   };
 
   const [newProduct, setNewProduct] = useState({
@@ -555,7 +572,7 @@ const NewSupply = () => {
         ) : (
           /* STEP 2: Stock Items Section */
           <div className="space-y-4">
-            {/* Header Summary Bar */}
+            {/* Header Summary Bar with Live Matching Indicator */}
             <div className="bg-white px-5 py-3.5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-5 items-center justify-between">
               <div className="flex flex-wrap items-center gap-6">
                 <div>
@@ -587,7 +604,7 @@ const NewSupply = () => {
               <div className="flex items-center gap-6 border-l border-slate-200 pl-5">
                 <div className="text-right">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                    Target Total
+                    Entered Target Total
                   </span>
                   <span className="text-xs font-semibold text-slate-700">
                     Rs. {Number(originalInvoiceTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -595,11 +612,11 @@ const NewSupply = () => {
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                    Items Total
+                    Added Items Total
                   </span>
                   <span
                     className={`text-xs font-bold ${
-                      Math.abs(getItemsTotal() - originalInvoiceTotal) < 0.01
+                      isTotalMatched
                         ? "text-emerald-600"
                         : getItemsTotal() > originalInvoiceTotal
                         ? "text-red-600"
@@ -608,6 +625,19 @@ const NewSupply = () => {
                   >
                     Rs. {getItemsTotal().toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
+                </div>
+                <div>
+                  {isTotalMatched ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">
+                      <CheckCircle2 size={12} className="text-emerald-600" />
+                      Totals Match
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md">
+                      <AlertTriangle size={12} className="text-amber-600" />
+                      Diff: Rs. {Math.abs(originalInvoiceTotal - getItemsTotal()).toFixed(2)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -899,29 +929,133 @@ const NewSupply = () => {
         </div>
       )}
 
-      {/* Confirm Save Modal */}
+      {/* STEP 3: Confirm & Verification Modal */}
       {showConfirmSave && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-5 border border-slate-200 text-center">
-            <h3 className="text-sm font-bold text-slate-900 mb-1">Complete Invoice Entry?</h3>
-            <p className="text-xs text-slate-500 mb-5">
-              Confirm saving supply invoice <b>#{invoiceData.invoice_no}</b> with {batchItems.length} item(s).
-            </p>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5 border border-slate-200">
+            <div className="text-center mb-4">
+              <h3 className="text-sm font-bold text-slate-900">
+                Invoice Total Verification
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Review and verify entered totals for invoice <b>#{invoiceData.invoice_no}</b>
+              </p>
+            </div>
+
+            {/* Verification Comparison Box */}
+            <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 mb-4 space-y-2.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-medium">Entered Target Amount:</span>
+                <span className="font-bold text-slate-800">
+                  Rs. {Number(originalInvoiceTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-medium">Calculated Items Total:</span>
+                <span className="font-bold text-slate-800">
+                  Rs. {getItemsTotal().toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-200">
+                <span className="text-slate-500 font-medium">Total Batches:</span>
+                <span className="font-semibold text-slate-700">{batchItems.length} item(s)</span>
+              </div>
+
+              {/* Status Badge */}
+              <div className="pt-1">
+                {isTotalMatched ? (
+                  <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                    <span>✓ Totals Match Exactly — Ready for Final Verification</span>
+                  </div>
+                ) : (
+                  <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 flex items-center gap-2 text-amber-800 text-xs font-medium">
+                    <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+                    <span>
+                      Difference of <b>Rs. {Math.abs(originalInvoiceTotal - getItemsTotal()).toFixed(2)}</b> detected.
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={() => setShowConfirmSave(false)}
                 className="py-2 text-xs font-semibold text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
               >
-                Back
+                Back to Edit
               </button>
               <button
                 type="button"
                 onClick={handleCompleteSupply}
                 disabled={loading}
-                className="py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm disabled:opacity-50"
+                className="py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
-                {loading ? "Saving..." : "Confirm & Save"}
+                {loading ? "Saving..." : "Verify & Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 4: Success Verification Modal */}
+      {showSuccessModal && savedInvoiceSummary && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3.5 shadow-sm">
+              <CheckCircle2 size={24} />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Supply Successfully Verified!
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Invoice record and incoming inventory batches have been saved.
+            </p>
+
+            {/* Invoice Confirmation Summary Card */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 mb-5 text-left text-xs space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Invoice Number:</span>
+                <span className="font-bold text-blue-600">#{savedInvoiceSummary.invoice_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Supplier:</span>
+                <span className="font-semibold text-slate-800">{savedInvoiceSummary.supplier_name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Batches Stocked:</span>
+                <span className="font-semibold text-slate-800">{savedInvoiceSummary.items_count} batch(es)</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                <span className="text-slate-700 font-semibold">Total Verified Amount:</span>
+                <span className="font-bold text-emerald-600 text-sm">
+                  Rs. {Number(savedInvoiceSummary.items_total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw size={14} />
+                New Entry
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  navigate("/supply-invoices", { state: { activeTab: "supply" } });
+                }}
+                className="py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <span>View Invoices</span>
+                <ArrowRight size={14} />
               </button>
             </div>
           </div>
