@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import axios from 'axios'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { WarehouseProvider } from './context/WarehouseContext.jsx'
 import './index.css'
 import App from './App.jsx'
 
@@ -22,7 +23,9 @@ axios.interceptors.request.use(
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <WarehouseProvider>
+        <App />
+      </WarehouseProvider>
     </AuthProvider>
   </StrictMode>,
 )
